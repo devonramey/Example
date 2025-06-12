@@ -1,0 +1,101 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Example for CAW using JavaScript API</title>
+
+  <style>
+    html, body {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+    #mapHeader {
+      text-align: center;
+      width: 100%;
+      padding: 10px 0;
+      background-color: #f8f8f8;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+      position: absolute;
+      top: 0;
+      z-index: 200; 
+    }
+    #viewDiv {
+      padding: 0;
+      margin: 40px 0 0 0; 
+      height: calc(100% - 40px); 
+      width: 100%;
+    }
+    .navigation-button {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      z-index: 100;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.29/"></script>
+
+  <script>
+    require([
+      "esri/views/MapView",
+      "esri/WebMap",
+      "esri/widgets/Sketch",
+      "esri/layers/GraphicsLayer",
+      "esri/widgets/Legend"
+    ], function(MapView, WebMap, Sketch, GraphicsLayer, Legend) {
+      const webmap = new WebMap({
+        portalItem: {
+          id: "b08e9e125ed34e939237f3fdcc1834d7"
+        }
+      });
+
+      const graphicsLayer = new GraphicsLayer();
+      webmap.add(graphicsLayer);
+
+      const view = new MapView({
+        map: webmap,
+        container: "viewDiv"
+      });
+
+      view.when(() => {
+        const sketch = new Sketch({
+          view: view,
+          layer: graphicsLayer
+        });
+
+        view.ui.add(sketch, "top-right");
+
+        var legend = new Legend({
+          view: view,
+        });
+
+        view.ui.add(legend, "bottom-right");
+
+        var linkButton = document.createElement("button");
+        linkButton.className = "navigation-button";
+        linkButton.innerHTML = "Go to Dashboard";
+        linkButton.onclick = function() {
+          window.open("https://www.globalforestwatch.org/dashboards/country/USA/2/?category=forest-change&location=WyJjb3VudHJ5IiwiVVNBIiwiMiJd", "_blank");
+        };
+
+        document.getElementById("viewDiv").appendChild(linkButton);
+      });
+    });
+  </script>
+</head>
+<body>
+  <div id="mapHeader">Example for CAW using JavaScript API</div>
+  <div id="viewDiv"></div>
+</body>
+</html>
+
+
+//Link to sample code for loading basic webmap https://developers.arcgis.com/javascript/latest/sample-code/webmap-basic/
+
+//Link to Legend widget https://developers.arcgis.com/javascript/latest/sample-code/widgets-legend/
+
+//Link to Sketch Widget https://developers.arcgis.com/javascript/latest/sample-code/sketch-geometries/
