@@ -1,101 +1,145 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Example for CAW using JavaScript API</title>
-
-  <style>
-    html, body {
-      padding: 0;
-      margin: 0;
-      height: 100%;
-      width: 100%;
-    }
-    #mapHeader {
-      text-align: center;
-      width: 100%;
-      padding: 10px 0;
-      background-color: #f8f8f8;
-      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
-      position: absolute;
-      top: 0;
-      z-index: 200; 
-    }
-    #viewDiv {
-      padding: 0;
-      margin: 40px 0 0 0; 
-      height: calc(100% - 40px); 
-      width: 100%;
-    }
-    .navigation-button {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      transform: translateY(-50%);
-      z-index: 100;
-    }
-  </style>
+  <title>CAW 3D Utility Viewer - Little Rock Dog Park</title>
 
   <link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css" />
   <script src="https://js.arcgis.com/4.29/"></script>
 
+  <style>
+    html, body, #viewDiv {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    #header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px 0;
+      background-color: #0078d4;
+      color: white;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      z-index: 99;
+    }
+
+    #viewDiv {
+      position: absolute;
+      top: 50px;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .esri-ui-top-left {
+      margin-top: 60px !important; /* Ensure below header */
+    }
+
+    #resetBtn {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      z-index: 200;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    #resetBtn:hover {
+      background-color: #f0f0f0;
+    }
+
+    .esri-expand__content {
+      max-height: 400px !important; /* Raise height limit for longer layer lists */
+      overflow-y: auto;
+    }
+  </style>
+
   <script>
     require([
-      "esri/views/MapView",
-      "esri/WebMap",
-      "esri/widgets/Sketch",
-      "esri/layers/GraphicsLayer",
-      "esri/widgets/Legend"
-    ], function(MapView, WebMap, Sketch, GraphicsLayer, Legend) {
-      const webmap = new WebMap({
+      "esri/WebScene",
+      "esri/views/SceneView",
+      "esri/widgets/Search",
+      "esri/widgets/Legend",
+      "esri/widgets/LayerList",
+      "esri/widgets/Expand"
+    ], function(WebScene, SceneView, Search, Legend, LayerList, Expand) {
+
+      const scene = new WebScene({
         portalItem: {
-          id: "b08e9e125ed34e939237f3fdcc1834d7"
+          id: "8975a54dd08b4ee6b116eb6d0858216e" // Your Dog Park scene
         }
       });
 
-      const graphicsLayer = new GraphicsLayer();
-      webmap.add(graphicsLayer);
-
-      const view = new MapView({
-        map: webmap,
-        container: "viewDiv"
+      const view = new SceneView({
+        container: "viewDiv",
+        map: scene
       });
 
+      let initialViewpoint;
+
       view.when(() => {
-        const sketch = new Sketch({
-          view: view,
-          layer: graphicsLayer
+        initialViewpoint = scene.initialViewProperties.viewpoint;
+        view.goTo(initialViewpoint);
+
+        // Assign default popup templates
+        scene.layers.forEach(layer => {
+          layer.popupTemplate = {
+            title: "{Name}",
+            content: "Feature from <b>" + layer.title + "</b><br>ID: {OBJECTID}"
+          };
         });
 
-        view.ui.add(sketch, "top-right");
+        // Search widget
+        const search = new Search({ view });
+        view.ui.add(search, "top-right");
 
-        var legend = new Legend({
+        // Legend widget in bottom-left
+        const legend = new Legend({ view });
+        const legendExpand = new Expand({
           view: view,
+          content: legend,
+          expanded: false
         });
+        view.ui.add(legendExpand, "bottom-left");
 
-        view.ui.add(legend, "bottom-right");
+        // LayerList in top-left, clearly visible
+        const layerList = new LayerList({ view });
+        const layerListExpand = new Expand({
+          view: view,
+          content: layerList,
+          expanded: false,
+          expandTooltip: "Show Layers"
+        });
+        view.ui.add(layerListExpand, "top-left");
 
-        var linkButton = document.createElement("button");
-        linkButton.className = "navigation-button";
-        linkButton.innerHTML = "Go to Dashboard";
-        linkButton.onclick = function() {
-          window.open("https://www.globalforestwatch.org/dashboards/country/USA/2/?category=forest-change&location=WyJjb3VudHJ5IiwiVVNBIiwiMiJd", "_blank");
+        // Reset View Button
+        const resetBtn = document.createElement("button");
+        resetBtn.id = "resetBtn";
+        resetBtn.textContent = "🔄 Reset View";
+        resetBtn.onclick = () => {
+          view.goTo(initialViewpoint);
         };
-
-        document.getElementById("viewDiv").appendChild(linkButton);
+        document.body.appendChild(resetBtn);
       });
     });
   </script>
 </head>
 <body>
-  <div id="mapHeader">Example for CAW using JavaScript API</div>
+  <div id="header">🚰 Central Arkansas Water - 3D Utility Viewer</div>
   <div id="viewDiv"></div>
 </body>
 </html>
 
-
-//Link to sample code for loading basic webmap https://developers.arcgis.com/javascript/latest/sample-code/webmap-basic/
-
-//Link to Legend widget https://developers.arcgis.com/javascript/latest/sample-code/widgets-legend/
-
-//Link to Sketch Widget https://developers.arcgis.com/javascript/latest/sample-code/sketch-geometries/
